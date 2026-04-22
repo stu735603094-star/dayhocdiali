@@ -2,73 +2,112 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>BAN DO NGAP LUT</title>
+    <title>Mo Phong Ngap Lut Dong</title>
     <style>
-        body { font-family: sans-serif; text-align: center; background: #f0f4f8; margin: 0; padding-bottom: 50px; }
-        .header { background: #003366; color: white; padding: 20px; }
+        body { font-family: sans-serif; text-align: center; background: #f0f4f8; margin: 0; }
+        .header { background: #003366; color: white; padding: 15px; }
+        
+        /* Khung chứa các ảnh chồng khít lên nhau */
+        .map-container { 
+            position: relative; 
+            width: 90%; 
+            max-width: 800px; 
+            margin: 20px auto; 
+            background: white; 
+            line-height: 0; /* Xóa khoảng trống thừa */
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        /* Tất cả ảnh đều nằm cùng 1 vị trí */
+        .map-container img {
+            width: 100%;
+            height: auto;
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0; /* Mặc định là trong suốt */
+            transition: opacity 1.5s ease-in-out; /* Hiệu ứng mờ dần trong 1.5 giây */
+        }
+
+        /* Ảnh đầu tiên và ảnh được chọn sẽ hiện lên */
+        .map-container img.active {
+            opacity: 1;
+            position: relative; /* Giữ khung cho ảnh đang hiện */
+        }
+
         .controls { margin: 20px; }
-        button { padding: 10px 20px; cursor: pointer; border-radius: 20px; border: 1px solid #003366; background: white; font-weight: bold; margin: 5px; }
-        button.active { background: #003366; color: white; }
-        .map-box { position: relative; width: 90%; max-width: 900px; margin: auto; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-        .map-layer { width: 100%; display: none; border-radius: 5px; }
-        .map-layer.active { display: block; }
-        .mission { margin: 20px auto; padding: 15px; background: #fff; border-left: 5px solid #e91e63; width: 80%; max-width: 800px; text-align: left; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; border-radius: 20px; border: 1px solid #003366; font-weight: bold; }
+        button.active-btn { background: #003366; color: white; }
+        .play-btn { background: #ff9800; color: white; border: none; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h1>HE THONG BAN DO TUONG TAC</h1>
-    <p>Truong THPT Tran Suyen - Phu Hoa</p>
+    <h2>MÔ PHỎNG NƯỚC DÂNG (HIỆU ỨNG ĐỘNG)</h2>
 </div>
 
 <div class="controls">
-    <button onclick="show('gt', this)" class="active">Giao thong</button>
-    <button onclick="show('dh', this)">Dia hinh</button>
-    <button onclick="show('c1', this)">Cap 1</button>
-    <button onclick="show('c2', this)">Cap 2</button>
-    <button onclick="show('c3', this)">Cap 3</button>
+    <button onclick="change('gt', this)" class="active-btn">Giao Thong</button>
+    <button onclick="change('dh', this)">Dia Hinh</button>
+    <button onclick="change('c1', this)" id="b1">Cap 1</button>
+    <button onclick="change('c2', this)" id="b2">Cap 2</button>
+    <button onclick="change('c3', this)" id="b3">Cap 3</button>
+    <br><br>
+    <button class="play-btn" onclick="start()">▶ CHẠY TỰ ĐỘNG (VIDEO)</button>
 </div>
 
-<div class="map-box">
-    <img src="GTHONG.png" id="gt" class="map-layer active">
-    <img src="DEM2.png" id="dh" class="map-layer">
-    <img src="BDC1.png" id="c1" class="map-layer">
-    <img src="BDC2.png" id="c2" class="map-layer">
-    <img src="BDC3.png" id="c3" class="map-layer">
-</div>
-
-<div class="mission" id="msg">
-    <b>Huong dan:</b> Chon cac cap do bao dong de xem dien bien ngap lut.
+<div class="map-container">
+    <img src="GTHONG.png" id="gt" class="active">
+    <img src="DEM2.png" id="dh">
+    <img src="BDC1.png" id="c1">
+    <img src="BDC2.png" id="c2">
+    <img src="BDC3.png" id="c3">
 </div>
 
 <script>
-    var data = {
-        'gt': '<b>Giao thong:</b> Xem cac tuyen duong chinh.',
-        'dh': '<b>Dia hinh:</b> Tim cac vung cao (DEM2) de tranh ngap.',
-        'c1': '<b>Cap 1:</b> Nuoc bat dau dang o vung ven song Ba.',
-        'c2': '<b>Cap 2:</b> Nguy hiem, nhieu tuyen duong bi chia cat.',
-        'c3': '<b>Cap 3:</b> Ngap lut nghiem trong toan huyen.'
-    };
+    var timer;
 
-    function show(id, btn) {
-        // An het anh
-        var imgs = document.getElementsByClassName('map-layer');
-        for (var i = 0; i < imgs.length; i++) {
-            imgs[i].style.display = 'none';
-        }
-        // Hien anh duoc chon
-        document.getElementById(id).style.display = 'block';
+    function change(id, btn) {
+        clearInterval(timer); // Dừng tự động nếu bấm tay
+        
+        // Tìm tất cả ảnh và bỏ class active
+        var images = document.querySelectorAll('.map-container img');
+        images.forEach(img => img.classList.remove('active'));
 
-        // Cap nhat chu
-        document.getElementById('msg').innerHTML = data[id];
+        // Hiện ảnh được chọn
+        document.getElementById(id).classList.add('active');
 
-        // Doi mau nut
-        var btns = document.getElementsByTagName('button');
-        for (var j = 0; j < btns.length; j++) {
-            btns[j].classList.remove('active');
-        }
-        btn.classList.add('active');
+        // Đổi màu nút
+        var btns = document.querySelectorAll('button');
+        btns.forEach(b => b.classList.remove('active-btn'));
+        if(btn) btn.classList.add('active-btn');
+    }
+
+    function start() {
+        var steps = ['c1', 'c2', 'c3'];
+        var i = 0;
+        
+        // Cứ mỗi 2 giây sẽ đổi một cấp độ ngập
+        timer = setInterval(function() {
+            var id = steps[i];
+            var btn = document.getElementById('b' + (i+1));
+            
+            // Chuyển ảnh
+            var images = document.querySelectorAll('.map-container img');
+            images.forEach(img => img.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+
+            // Đổi màu nút tương ứng
+            var btns = document.querySelectorAll('button');
+            btns.forEach(b => b.classList.remove('active-btn'));
+            if(btn) btn.classList.add('active-btn');
+
+            i++;
+            if(i >= steps.length) i = 0; // Quay lại từ đầu
+        }, 2000);
     }
 </script>
 
